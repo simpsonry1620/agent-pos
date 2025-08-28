@@ -9,6 +9,8 @@ from sqlalchemy import text
 
 from app.database import get_db_session
 from app.models import Account, Hierarchy, Vendor
+from app.api.fuzzy_search import router as fuzzy_search_router
+from app.api.sample_data import router as sample_data_router
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -25,6 +27,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API routers
+app.include_router(fuzzy_search_router)
+app.include_router(sample_data_router)
 
 @app.get("/")
 async def root():
