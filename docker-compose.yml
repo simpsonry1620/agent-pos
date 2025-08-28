@@ -1,0 +1,53 @@
+services:
+  # Backend FastAPI Service
+  backend:
+    build: ./backend # Path to the backend Dockerfile
+    ports:
+      - "8001:8000" # Map host port 8001 to container port 8000 (avoiding conflicts)
+    volumes:
+      - ./backend:/app # Mount backend code for live reloading
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/pos_data
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+      - NVIDIA_LLM_URL=${NVIDIA_LLM_URL}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
+    depends_on:
+      - db # Ensures the database is started before the backend
+    networks:
+      - app-network
+
+  # Frontend React Service
+  frontend:
+    build: ./frontend # Path to the frontend Dockerfile
+    ports:
+      - "3001:3000" # Map host port 3001 to container port 3000 (avoiding conflicts)
+    volumes:
+      - ./frontend/src:/app/src # Mount src for live reloading
+      - ./frontend/public:/app/public # Mount public assets
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  # PostgreSQL Database Service
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/ # Persist data
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=pos_data
+    ports:
+      - "5433:5432" # Expose DB port for local inspection (avoiding conflicts)
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data: # Define the named volume for data persistence
